@@ -62,10 +62,23 @@ class FCBlock(nn.Module):
             BatchLinear(in_features, hidden_features), nl
         ))
 
-        for i in range(num_hidden_layers):
-            self.net.append(nn.Sequential(
+        self.net.append(nn.Sequential(
+                BatchLinear(hidden_features, hidden_features), nn.ReLU(inplace=True)
+            ))
+        self.net.append(nn.Sequential(
                 BatchLinear(hidden_features, hidden_features), nl
             ))
+        self.net.append(nn.Sequential(
+                BatchLinear(hidden_features, hidden_features), nn.ReLU(inplace=True)
+            ))
+        self.net.append(nn.Sequential(
+                BatchLinear(hidden_features, hidden_features), nl
+            ))
+
+        # for i in range(num_hidden_layers):
+        #     self.net.append(nn.Sequential(
+        #         BatchLinear(hidden_features, hidden_features), nl
+        #     ))
 
         if outermost_linear:
             self.net.append(nn.Sequential(BatchLinear(hidden_features, out_features)))
@@ -80,6 +93,8 @@ class FCBlock(nn.Module):
 
         if first_layer_init is not None: # Apply special initialization to first layer, if applicable.
             self.net[0].apply(first_layer_init)
+        self.net[0].apply(init_weights_normal)
+        self.net[0].apply(init_weights_normal)
 
     def forward(self, coords, params=None, **kwargs):
         if params is None:
