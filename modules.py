@@ -93,8 +93,8 @@ class FCBlock(nn.Module):
 
         if first_layer_init is not None: # Apply special initialization to first layer, if applicable.
             self.net[0].apply(first_layer_init)
-        self.net[0].apply(init_weights_normal)
-        self.net[0].apply(init_weights_normal)
+        self.net[1].apply(init_weights_normal)
+        self.net[3].apply(init_weights_normal)
 
     def forward(self, coords, params=None, **kwargs):
         if params is None:
