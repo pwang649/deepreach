@@ -142,44 +142,43 @@ def scenario_optimization(model, dynamics, tMin, t, dt, set_type, control_type, 
         pbar_pos += 1
 
     nums_valid_samples = []
-    while True:
-        if (max_scenarios and (num_scenarios >= max_scenarios)) or (max_violations and (num_violations >= max_violations)):
-            break
+    # while True:
+    #     if (max_scenarios and (num_scenarios >= max_scenarios)) or (max_violations and (num_violations >= max_violations)):
+    #         break
 
-        batch_scenario_states = torch.zeros(scenario_batch_size, dynamics.state_dim)
-        batch_scenario_values = torch.zeros(scenario_batch_size, )
+    batch_scenario_states = torch.zeros(scenario_batch_size, dynamics.state_dim)
+    batch_scenario_values = torch.zeros(scenario_batch_size, )
 
-        num_collected_scenarios = 0
-        while num_collected_scenarios < scenario_batch_size:
-            if max_samples and (num_samples >= max_samples):
-                break
-            # sample batch
-            batch_sample_times = torch.full((sample_batch_size, 1), t)
-            batch_sample_states = dynamics.equivalent_wrapped_state(sample_generator.sample(sample_batch_size))
-            batch_sample_coords = torch.cat((batch_sample_times, batch_sample_states), dim=-1)
-
-            # validate batch
-            with torch.no_grad():
-                batch_sample_model_results = model({'coords': dynamics.coord_to_input(batch_sample_coords.cuda())})
-                batch_sample_values = dynamics.io_to_value(batch_sample_model_results['model_in'].detach(), batch_sample_model_results['model_out'].squeeze(dim=-1).detach())
-            batch_valid_sample_idxs = torch.where(sample_validator.validate(batch_sample_coords, batch_sample_values))[0]
-            batch_valid_sample_idxs = batch_valid_sample_idxs.to(torch.device('cpu'))
-
-            # store valid samples
-            num_valid_samples = len(batch_valid_sample_idxs)
-            start_idx = num_collected_scenarios
-            end_idx = min(start_idx + num_valid_samples, scenario_batch_size)
-            batch_scenario_states[start_idx:end_idx] = batch_sample_states[batch_valid_sample_idxs][:end_idx-start_idx]
-            batch_scenario_values[start_idx:end_idx] = batch_sample_values[batch_valid_sample_idxs][:end_idx-start_idx]
-
-            # update counters
-            num_samples += sample_batch_size
-            if max_samples:
-                samples_pbar.update(sample_batch_size)
-            num_collected_scenarios += end_idx - start_idx
-            nums_valid_samples.append(num_valid_samples)
+    num_collected_scenarios = 0
+    while num_collected_scenarios < scenario_batch_size:
         if max_samples and (num_samples >= max_samples):
             break
+        # sample batch
+        batch_sample_times = torch.full((sample_batch_size, 1), t)
+        batch_sample_states = dynamics.equivalent_wrapped_state(sample_generator.sample(sample_batch_size))
+        batch_sample_coords = torch.cat((batch_sample_times, batch_sample_states), dim=-1)
+
+        # validate batch
+        with torch.no_grad():
+            batch_sample_model_results = model({'coords': dynamics.coord_to_input(batch_sample_coords.cuda())})
+            batch_sample_values = dynamics.io_to_value(batch_sample_model_results['model_in'].detach(), batch_sample_model_results['model_out'].squeeze(dim=-1).detach())
+        batch_valid_sample_idxs = torch.where(sample_validator.validate(batch_sample_coords, batch_sample_values))[0]
+        batch_valid_sample_idxs = batch_valid_sample_idxs.to(torch.device('cpu'))
+
+        # store valid samples
+        num_valid_samples = len(batch_valid_sample_idxs)
+        start_idx = num_collected_scenarios
+        end_idx = min(start_idx + num_valid_samples, scenario_batch_size)
+        batch_scenario_states[start_idx:end_idx] = batch_sample_states[batch_valid_sample_idxs][:end_idx-start_idx]
+        batch_scenario_values[start_idx:end_idx] = batch_sample_values[batch_valid_sample_idxs][:end_idx-start_idx]
+
+        # update counters
+        num_samples += sample_batch_size
+        if max_samples:
+            samples_pbar.update(sample_batch_size)
+        num_collected_scenarios += end_idx - start_idx
+        nums_valid_samples.append(num_valid_samples)
+ 
 
         # propagate scenarios
         state_trajs = torch.zeros(scenario_batch_size, int((t-tMin)/dt + 1), dynamics.state_dim)

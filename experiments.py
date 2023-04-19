@@ -47,10 +47,7 @@ class Experiment(ABC):
         dataset = self.dataset
         dynamics = dataset.dynamics
 
-        # 0. explicit statement of probabilistic guarantees, N, \beta, \epsilon
-        beta = 1e-16
-        epsilon = 1e-3
-        N = int(math.ceil((2/epsilon)*(np.log(1/beta)+1)))
+        N = 100000
 
         # 1. execute algorithm for tMax
         # record state/learned_value/violation for each while loop iteration
