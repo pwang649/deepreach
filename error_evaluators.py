@@ -163,6 +163,7 @@ def scenario_optimization(model, dynamics, tMin, t, dt, set_type, control_type, 
                 batch_sample_model_results = model({'coords': dynamics.coord_to_input(batch_sample_coords.cuda())})
                 batch_sample_values = dynamics.io_to_value(batch_sample_model_results['model_in'].detach(), batch_sample_model_results['model_out'].squeeze(dim=-1).detach())
             batch_valid_sample_idxs = torch.where(sample_validator.validate(batch_sample_coords, batch_sample_values))[0]
+            batch_valid_sample_idxs = batch_valid_sample_idxs.to(torch.device('cpu'))
 
             # store valid samples
             num_valid_samples = len(batch_valid_sample_idxs)

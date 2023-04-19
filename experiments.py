@@ -28,7 +28,7 @@ class Experiment(ABC):
             self.model.load_state_dict(torch.load(model_path)['model'])
 
     def test(self, current_time, last_checkpoint, checkpoint_dt, dt, num_scenarios, num_violations, set_type, control_type, data_step, checkpoint_toload=None):
-        was_training = self.model.training
+
         self.model.eval()
         self.model.requires_grad_(False)
 
